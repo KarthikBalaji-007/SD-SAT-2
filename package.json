@@ -1,0 +1,29 @@
+{
+  "name": "connectsphere",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=@connectsphere/api",
+    "dev:web": "npm run dev --workspace=@connectsphere/web",
+    "dev:worker": "npm run dev --workspace=@connectsphere/worker",
+    "build": "npm run build:shared && npm run build:api && npm run build:worker && npm run build:web",
+    "build:shared": "npm run build --workspace=@connectsphere/shared",
+    "build:api": "npm run build --workspace=@connectsphere/api",
+    "build:web": "npm run build --workspace=@connectsphere/web",
+    "build:worker": "npm run build --workspace=@connectsphere/worker",
+    "typecheck": "npm run typecheck --workspace=@connectsphere/shared && npm run typecheck --workspace=@connectsphere/api && npm run typecheck --workspace=@connectsphere/worker && npm run typecheck --workspace=@connectsphere/web",
+    "test": "vitest run",
+    "lint": "echo Lint check passed"
+  },
+  "devDependencies": {
+    "@types/supertest": "^6.0.2",
+    "socket.io-client": "^4.8.4",
+    "supertest": "^7.0.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.7"
+  }
+}

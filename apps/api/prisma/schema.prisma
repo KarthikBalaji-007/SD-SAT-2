@@ -1,0 +1,195 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum PrivacySetting {
+  PUBLIC
+  PRIVATE
+}
+
+enum ContentVisibility {
+  PUBLIC
+  FOLLOWERS_ONLY
+}
+
+enum ContentStatus {
+  ACTIVE
+  HIDDEN
+  DELETED
+}
+
+enum ReactionType {
+  LIKE
+  LOVE
+  CELEBRATE
+  INSIGHTFUL
+}
+
+enum ReportTargetType {
+  POST
+  COMMENT
+  USER
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  DISMISSED
+}
+
+model User {
+  id           String         @id @default(uuid())
+  username     String         @unique
+  displayName  String
+  email        String         @unique
+  passwordHash String
+  bio          String?
+  avatarKey    String?
+  privacy      PrivacySetting @default(PUBLIC)
+  role         UserRole       @default(USER)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  // Relationships
+  posts            Post[]
+  comments         Comment[]
+  reactions        Reaction[]
+  media            Media[]
+  following        Follow[]       @relation("UserFollowing")
+  followers        Follow[]       @relation("UserFollowers")
+  filedReports     Report[]       @relation("UserFiledReports")
+  moderatedReports Report[]       @relation("ModeratorReports")
+
+  @@index([username])
+  @@index([email])
+}
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followedId  String
+  createdAt   DateTime @default(now())
+
+  follower User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  followed User @relation("UserFollowers", fields: [followedId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followedId])
+  @@index([followerId])
+  @@index([followedId])
+}
+
+model Post {
+  id         String            @id @default(uuid())
+  authorId   String
+  text       String
+  visibility ContentVisibility @default(PUBLIC)
+  status     ContentStatus     @default(ACTIVE)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  media     Media[]
+  comments  Comment[]
+  reactions Reaction[]
+
+  @@index([authorId])
+  @@index([createdAt])
+  @@index([status])
+}
+
+model Media {
+  id         String   @id @default(uuid())
+  postId     String?
+  ownerId    String
+  objectKey  String   @unique
+  mimeType   String
+  sizeBytes  Int
+  createdAt  DateTime @default(now())
+
+  post  Post? @relation(fields: [postId], references: [id], onDelete: SetNull)
+  owner User  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([ownerId])
+}
+
+model Comment {
+  id        String        @id @default(uuid())
+  postId    String
+  authorId  String
+  text      String
+  status    ContentStatus @default(ACTIVE)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model Reaction {
+  id        String       @id @default(uuid())
+  postId    String
+  userId    String
+  type      ReactionType @default(LIKE)
+  createdAt DateTime     @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+}
+
+model Report {
+  id          String           @id @default(uuid())
+  reporterId  String
+  targetType  ReportTargetType
+  targetId    String
+  reason      String
+  status      ReportStatus     @default(PENDING)
+  moderatorId String?
+  createdAt   DateTime         @default(now())
+  resolvedAt  DateTime?
+
+  reporter  User  @relation("UserFiledReports", fields: [reporterId], references: [id], onDelete: Cascade)
+  moderator User? @relation("ModeratorReports", fields: [moderatorId], references: [id], onDelete: SetNull)
+
+  @@index([reporterId])
+  @@index([targetType, targetId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OutboxEvent {
+  id            String    @id @default(uuid())
+  eventType     String
+  aggregateId   String
+  payload       Json
+  createdAt     DateTime  @default(now())
+  publishedAt   DateTime?
+  attempts      Int       @default(0)
+  lastAttemptAt DateTime?
+  retryAfter    DateTime?
+  lastError     String?
+
+  @@index([publishedAt, createdAt])
+  @@index([publishedAt, retryAfter])
+  @@index([eventType])
+}
+

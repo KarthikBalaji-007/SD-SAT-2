@@ -1,0 +1,31 @@
+{
+  "name": "@connectsphere/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@connectsphere/shared": "*",
+    "@prisma/client": "^6.4.1",
+    "amqplib": "^0.10.5",
+    "dotenv": "^16.4.7",
+    "ioredis": "^5.5.0",
+    "mongoose": "^8.10.1",
+    "pg": "^8.13.3",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.6",
+    "@types/node": "^22.13.4",
+    "@types/pg": "^8.11.11",
+    "prisma": "^6.4.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}
+
